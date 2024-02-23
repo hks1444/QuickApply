@@ -32,7 +32,7 @@ const embeddings = new OpenAIEmbeddings({
     openAIApiKey: process.env.OPEN_AI_API_KEY,
 });
 
-console.log(process.cwd());
+
 const readjson = async () => {
     let data = await readFile(process.cwd() + '/job-config.json', { encoding: 'utf8' });
     return data;
@@ -219,35 +219,41 @@ const ai_function = async (input, channel) => {
 
 
 export async function POST(req, res) {
-    if (req.method === 'POST') {
-        const data = await req.json();
-        const text = data.text;
-        const channel = data.channel_name;
-        if (memory === null) {
-            console.log(channel);
-            memory = new BufferMemory({
-                returnMessages: true,
-                chatHistory: new UpstashRedisChatMessageHistory({
-                    sessionId: channel,
-                    config: {
-                        url: process.env.UPSTASH_REDIS_REST_URL,
-                        token: process.env.UPSTASH_REDIS_REST_TOKEN,
-                    }
-                }),
-            });
+    try {
+        if (req.method === 'POST') {
+            const data = await req.json();
+            const text = data.text;
+            const channel = data.channel_name;
+            if (memory === null) {
+                console.log(channel);
+                memory = new BufferMemory({
+                    returnMessages: true,
+                    chatHistory: new UpstashRedisChatMessageHistory({
+                        sessionId: channel,
+                        config: {
+                            url: process.env.UPSTASH_REDIS_REST_URL,
+                            token: process.env.UPSTASH_REDIS_REST_TOKEN,
+                        }
+                    }),
+                });
+            }
+            let context = await getRelevantDocuments(text);
+            if (context === "") {
+                await getretriever();
+                context = await getRelevantDocuments(text);
+            }
+            if (!text) {
+                return res.status(400).json({ error: 'Text is required' });
+            }
+            let ai_output = await ai_function({ input: text, context: context }, channel);
+            let load_cv = await cv_chain.invoke(ai_output, channel)
+            return NextResponse.json({ text: ai_output, loadcv: load_cv });
+        } else {
+            res.status(405).json({ error: 'Method Not Allowed' });
         }
-        let context = await getRelevantDocuments(text);
-        if (context === "") {
-            await getretriever();
-            context = await getRelevantDocuments(text);
-        }
-        if (!text) {
-            return res.status(400).json({ error: 'Text is required' });
-        }
-        let ai_output = await ai_function({ input: text, context: context }, channel);
-        let load_cv = await cv_chain.invoke(ai_output, channel)
-        return NextResponse.json({ text: ai_output, loadcv: load_cv });
-    } else {
-        res.status(405).json({ error: 'Method Not Allowed' });
+    } catch (error) {
+        // If an error occurs during file writing, log the error and return a JSON response with a failure message and a 500 status code
+        console.log("Error occurred ", error);
+        return NextResponse.json({ Message: process.cwd(), status: 500 });
     }
 }
