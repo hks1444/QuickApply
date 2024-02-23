@@ -34,7 +34,7 @@ const embeddings = new OpenAIEmbeddings({
 
 
 const readjson = async () => {
-    let data = await readFile(process.cwd() + '/job-config.json', { encoding: 'utf8' });
+    let data = await readFile('job-config.json', { encoding: 'utf8' });
     return data;
 };
 let data = await readjson();
