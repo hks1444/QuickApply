@@ -18,7 +18,7 @@ import { UpstashRedisChatMessageHistory } from "langchain/stores/message/upstash
 import { Index } from "@upstash/vector";
 import { uploader } from "./upload_to_sheets.js";
 dotenv.config();
-
+/*
 const index = new Index({
     url: process.env.UPSTASH_VECTOR_REST_URL,
     token: process.env.UPSTASH_VECTOR_REST_TOKEN,
@@ -217,7 +217,7 @@ const ai_function = async (input, channel) => {
     return ai_output;
 }
 
-
+*/
 export async function POST(req, res) {
     try {
         return NextResponse.json({ text: process.cwd(), loadcv: "no" });
