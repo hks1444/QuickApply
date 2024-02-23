@@ -34,7 +34,7 @@ const embeddings = new OpenAIEmbeddings({
 
 
 const readjson = async () => {
-    let data = await readFile('job-config.json', { encoding: 'utf8' });
+    let data = await readFile(process.cwd() + '/job-config.json', { encoding: 'utf8' });
     return data;
 };
 let data = await readjson();
@@ -219,41 +219,35 @@ const ai_function = async (input, channel) => {
 
 
 export async function POST(req, res) {
-    try {
-        if (req.method === 'POST') {
-            const data = await req.json();
-            const text = data.text;
-            const channel = data.channel_name;
-            if (memory === null) {
-                console.log(channel);
-                memory = new BufferMemory({
-                    returnMessages: true,
-                    chatHistory: new UpstashRedisChatMessageHistory({
-                        sessionId: channel,
-                        config: {
-                            url: process.env.UPSTASH_REDIS_REST_URL,
-                            token: process.env.UPSTASH_REDIS_REST_TOKEN,
-                        }
-                    }),
-                });
-            }
-            let context = await getRelevantDocuments(text);
-            if (context === "") {
-                await getretriever();
-                context = await getRelevantDocuments(text);
-            }
-            if (!text) {
-                return res.status(400).json({ error: 'Text is required' });
-            }
-            let ai_output = await ai_function({ input: text, context: context }, channel);
-            let load_cv = await cv_chain.invoke(ai_output, channel)
-            return NextResponse.json({ text: ai_output, loadcv: load_cv });
-        } else {
-            res.status(405).json({ error: 'Method Not Allowed' });
+    if (req.method === 'POST') {
+        const data = await req.json();
+        const text = data.text;
+        const channel = data.channel_name;
+        if (memory === null) {
+            console.log(channel);
+            memory = new BufferMemory({
+                returnMessages: true,
+                chatHistory: new UpstashRedisChatMessageHistory({
+                    sessionId: channel,
+                    config: {
+                        url: process.env.UPSTASH_REDIS_REST_URL,
+                        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+                    }
+                }),
+            });
         }
-    } catch (error) {
-        // If an error occurs during file writing, log the error and return a JSON response with a failure message and a 500 status code
-        console.log("Error occurred ", error);
-        return NextResponse.json({ Message: error, status: 500 });
+        let context = await getRelevantDocuments(text);
+        if (context === "") {
+            await getretriever();
+            context = await getRelevantDocuments(text);
+        }
+        if (!text) {
+            return res.status(400).json({ error: 'Text is required' });
+        }
+        let ai_output = await ai_function({ input: text, context: context }, channel);
+        let load_cv = await cv_chain.invoke(ai_output, channel)
+        return NextResponse.json({ text: ai_output, loadcv: load_cv });
+    } else {
+        res.status(405).json({ error: 'Method Not Allowed' });
     }
 }
