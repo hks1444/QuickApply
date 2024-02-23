@@ -32,7 +32,7 @@ const embeddings = new OpenAIEmbeddings({
     openAIApiKey: process.env.OPEN_AI_API_KEY,
 });
 
-
+console.log(process.cwd());
 const readjson = async () => {
     let data = await readFile(process.cwd() + '/job-config.json', { encoding: 'utf8' });
     return data;
