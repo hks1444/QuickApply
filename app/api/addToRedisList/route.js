@@ -249,7 +249,7 @@ export async function POST(req, res) {
             let load_cv = await cv_chain.invoke(ai_output, channel)
             return NextResponse.json({ text: ai_output, loadcv: load_cv });
         } else {
-            res.status(405).json({ error: 'Method Not Allowed' });
+            res.status(405).json({ error: process.cwd() });
         }
     } catch (error) {
         // If an error occurs during file writing, log the error and return a JSON response with a failure message and a 500 status code
