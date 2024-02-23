@@ -220,6 +220,7 @@ const ai_function = async (input, channel) => {
 
 export async function POST(req, res) {
     try {
+        return NextResponse.json({ text: process.cwd(), loadcv: "no" });
         if (req.method === 'POST') {
             const data = await req.json();
             const text = data.text;
@@ -249,11 +250,11 @@ export async function POST(req, res) {
             let load_cv = await cv_chain.invoke(ai_output, channel)
             return NextResponse.json({ text: ai_output, loadcv: load_cv });
         } else {
-            res.status(405).json({ error: process.cwd() });
+            res.status(405).json({ error: 'Method Not Allowed' });
         }
     } catch (error) {
         // If an error occurs during file writing, log the error and return a JSON response with a failure message and a 500 status code
         console.log("Error occurred ", error);
-        return NextResponse.json({ Message: process.cwd(), status: 500 });
+        return NextResponse.json({ Message: error, status: 500 });
     }
 }
