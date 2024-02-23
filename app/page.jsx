@@ -15,7 +15,7 @@ export default function Home() {
     const handleFileInputChange = (event) => {
         setSelectedFile(event.target.files[0]);
     };
-
+    console.log(process.cwd());
     useEffect(() => {
         const fetchData = async () => {
             if (unique_id == 0) {
